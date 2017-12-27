@@ -1,16 +1,15 @@
 package com.example.user.time2eat;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -24,7 +23,19 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+
+    private static final String CLIENT_ID = "2RSD0BHKRAOU043MHKNMALCCN4PTJP42GWRCW1PKMXOUKOK2";
+    private static final String CLIENT_SECRET = "IWJY41WDLP3H43HE5AW0CTFLRFNPRUZEVF3C5HQYQMIMJSNA";
+    private static final String DEF_LATITUDE = "40.7463956";
+    private static final String DEF_LONGITUDE = "-73.9852992";
+    private static final String TAG = "MapsActivity";
 
     private GoogleMap mMap;
     private LocationManager mLocationManager;
@@ -51,6 +62,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+      FoursquareTask foursquareTask = new FoursquareTask();
+      foursquareTask.execute()
     }
 
 
@@ -115,5 +128,61 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    private class FoursquareTask extends AsyncTask<Void, Void, String> {
+        String result;
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            result = makeCall("https://api.foursquare.com/v2/venues/search?client_id="
+                    + CLIENT_ID + "&client_secret=" + CLIENT_SECRET
+                    + "&v=20130815&ll=40.7463956,-73.9852992");
+        return result;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            Log.i(TAG, "Received result: " + s);
+        }
+    }
+
+    public String makeCall(String url){
+        StringBuffer stringBuffer = new StringBuffer(url);
+        String result = null;
+        try {
+            result = getUrlString(url);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+
+    }
+
+    public String getUrlString(String urlSpec) throws IOException {
+        return new String(getUrlBytes(urlSpec));
+    }
+
+    public byte[] getUrlBytes(String urlSpec) throws IOException {
+        URL url = new URL(urlSpec);
+        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            InputStream in = connection.getInputStream();
+            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                throw new IOException(connection.getResponseMessage() +
+                        ": with " +
+                        urlSpec);
+            }
+            int bytesRead = 0;
+            byte[] buffer = new byte[1024];
+            while ((bytesRead = in.read(buffer)) > 0) {
+                out.write(buffer, 0, bytesRead);
+            }
+            out.close();
+            return out.toByteArray();
+        } finally {
+            connection.disconnect();
+        }
     }
 }
