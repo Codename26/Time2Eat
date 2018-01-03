@@ -3,6 +3,7 @@ package com.example.user.time2eat;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -15,7 +16,17 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.CardView;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -24,24 +35,26 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener,
+        GoogleMap.OnMarkerClickListener {
 
     private static final String CLIENT_ID = "2RSD0BHKRAOU043MHKNMALCCN4PTJP42GWRCW1PKMXOUKOK2";
     private static final String CLIENT_SECRET = "IWJY41WDLP3H43HE5AW0CTFLRFNPRUZEVF3C5HQYQMIMJSNA";
-    private static final Double DEF_LATITUDE = 40.7463956;
-    private static final Double DEF_LONGITUDE = -73.9852992;
+    private static final Double DEF_LATITUDE = 50.4463956;
+    private static final Double DEF_LONGITUDE = 30.552992;
     private static final String TAG = "MapsActivity";
     private static final float DEFAULT_ZOOM = 15;
+    public static final String LAST_KNOWN_LOCATION = "LAST_KNOWN_LOCATION";
 
     private GoogleMap mMap;
     private LocationManager mLocationManager;
@@ -50,11 +63,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Location mLastKnownLocation;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private LatLng mDefaultLocation = new LatLng (DEF_LATITUDE,DEF_LONGITUDE);
+    private boolean isSearchTabVisible = false;
+    private CardView mCardView;
+    private Animation animAppear;
+    private Animation animDisappear;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_maps);
         mLocationPermissionGranted = !getLocationPermission();
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -73,20 +89,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-      FoursquareTask foursquareTask = new FoursquareTask();
-      foursquareTask.execute();
+        mCardView = findViewById(R.id.cardViewSearch);
+        animAppear = AnimationUtils.loadAnimation(MapsActivity.this, R.anim.appear);
+        animDisappear = AnimationUtils.loadAnimation(MapsActivity.this, R.anim.disappear);
+
     }
 
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -95,6 +103,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                    if (mCardView != null && mCardView.getVisibility() == View.VISIBLE){
+                        mCardView.setVisibility(View.GONE);
+                        mCardView.setAnimation(animDisappear);
+                        mCardView.getAnimation().start();
+                }
+            }
+        });
         updateLocationUI();
         getDeviceLocation();
     }
@@ -141,62 +159,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
         AlertDialog dialog = builder.create();
         dialog.show();
-    }
-
-    private class FoursquareTask extends AsyncTask<Void, Void, String> {
-        String result;
-
-        @Override
-        protected String doInBackground(Void... voids) {
-            result = makeCall("https://api.foursquare.com/v2/venues/explore?client_id="
-                    + CLIENT_ID + "&client_secret=" + CLIENT_SECRET
-                    + "&v=20171229&ll=50.448133,30.522345");
-        return result;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            Log.i(TAG, "Received result: " + s);
-        }
-    }
-
-    public String makeCall(String url){
-        StringBuffer stringBuffer = new StringBuffer(url);
-        String result = null;
-        try {
-            result = getUrlString(url);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return result;
-
-    }
-
-    public String getUrlString(String urlSpec) throws IOException {
-        return new String(getUrlBytes(urlSpec));
-    }
-
-    public byte[] getUrlBytes(String urlSpec) throws IOException {
-        URL url = new URL(urlSpec);
-        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-        try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            InputStream in = connection.getInputStream();
-            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                throw new IOException(connection.getResponseMessage() +
-                        ": with " +
-                        urlSpec);
-            }
-            int bytesRead = 0;
-            byte[] buffer = new byte[1024];
-            while ((bytesRead = in.read(buffer)) > 0) {
-                out.write(buffer, 0, bytesRead);
-            }
-            out.close();
-            return out.toByteArray();
-        } finally {
-            connection.disconnect();
-        }
     }
 
     private void updateLocationUI() {
@@ -247,5 +209,56 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch(SecurityException e)  {
             Log.e("Exception: %s", e.getMessage());
         }
+    }
+
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.venues_list:
+                startvenuesListActivity();
+                return true;
+            case R.id.search:
+                if (mCardView != null && mCardView.getVisibility() == View.VISIBLE){
+                    mCardView.setVisibility(View.GONE);
+                    mCardView.clearAnimation();
+                    mCardView.setAnimation(animDisappear);
+                    mCardView.getAnimation().start();
+                    return true;
+                }
+
+                mCardView.setVisibility(View.VISIBLE);
+                mCardView.setAnimation(animAppear);
+                mCardView.getAnimation().start();
+                isSearchTabVisible = true;
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void startvenuesListActivity() {
+        Intent intent = new Intent(MapsActivity.this, VenuesListActivity.class);
+        intent.putExtra(MapsActivity.LAST_KNOWN_LOCATION, mLastKnownLocation);
+        startActivity(intent);
+    }
+
+
+    @Override
+    public void onMapLongClick(LatLng latLng) {
+
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        return false;
     }
 }
