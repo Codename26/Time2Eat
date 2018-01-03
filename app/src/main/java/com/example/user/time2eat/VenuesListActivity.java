@@ -10,13 +10,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.List;
 
 public class VenuesListActivity extends AppCompatActivity implements FoursquareLoader.FetchItemsCallback{
     private RecyclerView mRecyclerView;
     private FoursquareLoader foursquareLoader;
     private LinearLayoutManager linearLayoutManager;
-    private Location mLastKnownLocation;
+    private LatLng mLastKnownLocation;
 
 
     @Override

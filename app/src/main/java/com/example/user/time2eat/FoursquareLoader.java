@@ -3,6 +3,8 @@ package com.example.user.time2eat;
 import android.location.Location;
 import android.util.Log;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,11 +34,11 @@ public class FoursquareLoader {
     private List<FoursquareItem> foursquareItems;
     private int limit = 20;
     private int radius = 750;
-    private Location mLastKnownLocation;
+    private LatLng mLastKnownLocation;
 
-    public FoursquareLoader(Location location){
-        mLastKnownLocation = location;
-        ll = stringFromLocation(mLastKnownLocation);
+    public FoursquareLoader(LatLng latLng){
+        mLastKnownLocation = latLng;
+        ll = stringFromLatLng(mLastKnownLocation);
         Log.i("ll", ll);
     }
 
@@ -97,6 +99,12 @@ public class FoursquareLoader {
                         if (location.has("address")) {
                             item.setAddress(location.getString("address"));
                         }
+                        if (location.has("lat")){
+                            item.setLatitude(location.getDouble("lat"));
+                        }
+                        if (location.has("lng")){
+                            item.setLongitude(location.getDouble("lng"));
+                        }
                         if (contact.has("phone")) {
                             item.setPhone(contact.getString("phone"));
                         }
@@ -127,8 +135,9 @@ public class FoursquareLoader {
         return foursquareItems;
     }
 
-    public String stringFromLocation(Location location) {
-        return Location.convert(location.getLatitude(), Location.FORMAT_DEGREES).replaceAll(",",".") + "," + Location.convert(location.getLongitude(), Location.FORMAT_DEGREES).replaceAll(",",".");
+    public String stringFromLatLng(LatLng latLng) {
+        return (String.valueOf(latLng.latitude).replaceAll(",",".")
+                + "," + String.valueOf(latLng.longitude).replaceAll(",","."));
     }
 
     private void sortVenues(){

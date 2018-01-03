@@ -8,17 +8,12 @@ import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
-import android.location.LocationProvider;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.support.annotation.NonNull;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -28,8 +23,12 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -40,13 +39,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.util.List;
 
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener,
-        GoogleMap.OnMarkerClickListener {
+        GoogleMap.OnMarkerClickListener, FoursquareLoader.FetchItemsCallback {
 
     private static final String CLIENT_ID = "2RSD0BHKRAOU043MHKNMALCCN4PTJP42GWRCW1PKMXOUKOK2";
     private static final String CLIENT_SECRET = "IWJY41WDLP3H43HE5AW0CTFLRFNPRUZEVF3C5HQYQMIMJSNA";
@@ -61,12 +58,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String provider;
     private boolean mLocationPermissionGranted = false;
     private Location mLastKnownLocation;
+    private Location mCurrentLocation;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private LatLng mDefaultLocation = new LatLng (DEF_LATITUDE,DEF_LONGITUDE);
     private boolean isSearchTabVisible = false;
     private CardView mCardView;
     private Animation animAppear;
     private Animation animDisappear;
+    private FoursquareLoader foursquareLoader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +92,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         animAppear = AnimationUtils.loadAnimation(MapsActivity.this, R.anim.appear);
         animDisappear = AnimationUtils.loadAnimation(MapsActivity.this, R.anim.disappear);
 
+        initAutocompleteFragment();
+
     }
+
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -113,8 +115,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         });
+
+        mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
+            @Override
+            public void onCameraIdle() {
+                loadMarkers();
+            }
+        });
         updateLocationUI();
         getDeviceLocation();
+
+    }
+
+    private void loadMarkers() {
+        if (mMap.getCameraPosition().target != null) {
+            foursquareLoader = new FoursquareLoader(mMap.getCameraPosition().target);
+            foursquareLoader.registerCallback(this);
+            foursquareLoader.retrofitCreator();
+        }
     }
 
     private boolean getLocationPermission() {
@@ -224,7 +242,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.venues_list:
-                startvenuesListActivity();
+                if(mLocationPermissionGranted) {
+                    startvenuesListActivity();
+                } else {
+                    showPermissionMessage();
+                }
                 return true;
             case R.id.search:
                 if (mCardView != null && mCardView.getVisibility() == View.VISIBLE){
@@ -247,7 +269,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void startvenuesListActivity() {
         Intent intent = new Intent(MapsActivity.this, VenuesListActivity.class);
-        intent.putExtra(MapsActivity.LAST_KNOWN_LOCATION, mLastKnownLocation);
+        intent.putExtra(MapsActivity.LAST_KNOWN_LOCATION, new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
         startActivity(intent);
     }
 
@@ -261,4 +283,46 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onMarkerClick(Marker marker) {
         return false;
     }
+
+    private void initAutocompleteFragment() {
+        PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
+                getFragmentManager().findFragmentById(R.id.autocomplete_fragment);
+
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                // TODO: Get info about the selected place.
+                if(place != null) {
+                    if (mMap != null) {
+                        if (place.getViewport() != null) {
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(place.getViewport(), 10));
+                        } else
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), DEFAULT_ZOOM));
+                    }
+                }
+            }
+            @Override
+            public void onError(Status status) {
+                // TODO: Handle the error.
+                Log.i(TAG, "An error occurred: " + status);
+            }
+        });
+    }
+
+
+    @Override
+    public void itemsFetchedCallBack() {
+        List<FoursquareItem> items = foursquareLoader.getVenues();
+     showMarkers(items);
+
+        }
+
+    private void showMarkers(List<FoursquareItem> items) {
+        for (int i = 0; i < items.size(); i++) {
+            mMap.addMarker(new MarkerOptions().position
+                    (new LatLng(items.get(i).getLatitude(), items.get(i).getLongitude())).title(items.get(i).getName()));
+        }
+
+    }
 }
+
