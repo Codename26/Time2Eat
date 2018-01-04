@@ -30,25 +30,25 @@ public class FoursquareLoader {
     private static final String CLIENT_ID = "2RSD0BHKRAOU043MHKNMALCCN4PTJP42GWRCW1PKMXOUKOK2";
     private static final String CLIENT_SECRET = "IWJY41WDLP3H43HE5AW0CTFLRFNPRUZEVF3C5HQYQMIMJSNA";
     private static final String CATEGORY_ID = "4d4b7105d754a06374d81259";
-    private String ll = "40.7484,-73.9857";
+    private static final String SECTION = "food";
+    private String ll;
     private List<FoursquareItem> foursquareItems;
-    private int limit = 20;
-    private int radius = 750;
-    private LatLng mLastKnownLocation;
+    private int mRadius = 500;
 
-    public FoursquareLoader(LatLng latLng){
-        mLastKnownLocation = latLng;
-        ll = stringFromLatLng(mLastKnownLocation);
+    public FoursquareLoader(LatLng latLng, int radius){
+
+        ll = stringFromLatLng(latLng);
+        mRadius = radius;
         Log.i("ll", ll);
     }
 
     public interface MessagesApi {
 
-        @GET("search?v=20171229")
+        @GET("explore?v=20171229")
         Call<String> searchVenues(@Query("client_id") String clientID,
                                   @Query("client_secret") String clientSecret,
                                   @Query("radius") int radius,
-                                  @Query("categoryId") String categoryId,
+                                  @Query("section") String section,
                                   @Query("ll") String ll);
 
     }
@@ -63,13 +63,13 @@ public class FoursquareLoader {
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .build();
         MessagesApi messagesApi = retrofit.create(MessagesApi.class);
-        Call<String> messages = messagesApi.searchVenues(CLIENT_ID, CLIENT_SECRET, radius, CATEGORY_ID, ll);
+        Call<String> messages = messagesApi.searchVenues(CLIENT_ID, CLIENT_SECRET, mRadius, SECTION, ll);
         messages.enqueue(new Callback<String>() {
             @Override
             public void onResponse(Call<String> call, Response<String> response) {
                 if (response.isSuccessful()) {
                     Log.i(TAG, "response " + response);
-                    parseFoursquare(response.body().toString());
+                    parseFoursquareExplore(response.body().toString());
 
                     Log.i(TAG, "response " + response.body());
                 } else {
@@ -83,7 +83,7 @@ public class FoursquareLoader {
             }
         });
     }
-    public void parseFoursquare(String response) {
+    public void parseFoursquareSearch(String response) {
         try {
             JSONObject jsonObject = new JSONObject(response);
             if (jsonObject.has("response")) {
@@ -123,6 +123,59 @@ public class FoursquareLoader {
         }
     }
 
+    public void parseFoursquareExplore(String response) {
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+            if (jsonObject.has("response")) {
+                if (jsonObject.getJSONObject("response").has("groups")) {
+                    JSONArray jsonArray = jsonObject.getJSONObject("response").getJSONArray("groups");
+                    jsonObject = jsonArray.getJSONObject(0);
+                    jsonArray = jsonObject.getJSONArray("items");
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        FoursquareItem item = new FoursquareItem();
+                        if (jsonArray.getJSONObject(i).has("venue")) {
+                            jsonObject = jsonArray.getJSONObject(i).getJSONObject("venue");
+                            if (jsonObject.has("contact")) {
+                                JSONObject contact = (JSONObject) jsonObject.getJSONObject("contact");
+                                if (contact.has("phone")) {
+                                    item.setPhone(contact.getString("phone"));
+                                }
+                            }
+                            if (jsonObject.has("location")) {
+                                JSONObject location = (JSONObject) jsonObject.getJSONObject("location");
+                                if (location.has("address")) {
+                                    item.setAddress(location.getString("address"));
+                                }
+                                if (location.has("lat")) {
+                                    item.setLatitude(location.getDouble("lat"));
+                                }
+                                if (location.has("lng")) {
+                                    item.setLongitude(location.getDouble("lng"));
+                                }
+
+                                if (location.has("distance")) {
+                                    item.setDistance(location.getInt("distance"));
+                                }
+                            }
+                            item.setId(jsonObject.getString("id"));
+                            item.setName(jsonObject.getString("name"));
+
+                            if (jsonObject.has("rating")){
+                                item.setRating(jsonObject.getDouble("rating"));
+                            }
+                            foursquareItems.add(item);
+                        }
+                    }
+                }
+            }
+            if (mFetchItemsCallback != null) {
+                mFetchItemsCallback.itemsFetchedCallBack();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 
     FetchItemsCallback mFetchItemsCallback;
@@ -132,6 +185,7 @@ public class FoursquareLoader {
 
     public List<FoursquareItem> getVenues(){
         sortVenues();
+        findBestVenue();
         return foursquareItems;
     }
 
@@ -152,6 +206,45 @@ public class FoursquareLoader {
 
             }
 
+        }
+    }
+    private void findBestVenue(){
+        int maxIndex = 0;
+        double max = 0;
+        boolean hasRating = false;
+
+        for (int i = 0; i < foursquareItems.size(); i++) {
+            if (foursquareItems.get(i).getRating() > 0){
+                maxIndex = i;
+                max = foursquareItems.get(i).getRating();
+                hasRating = true;
+            }
+        }
+        if (!hasRating){
+            return;
+        }
+        List maxIndexes = new ArrayList();
+
+        for (int i = 0; i < foursquareItems.size(); i++) {
+            if (foursquareItems.get(i).getRating() > max) {
+                maxIndex = i;
+                max = foursquareItems.get(i).getRating();
+            }
+        }
+            for (int i = 0; i < foursquareItems.size(); i++) {
+            if (i == maxIndex){
+                continue;
+            }
+              if (foursquareItems.get(i).getRating() == max) {
+                  maxIndexes.add(i);
+              }
+            }
+
+        foursquareItems.get(maxIndex).setBest(true);
+        if (maxIndexes.size() != 0) {
+            for (int i = 0; i < maxIndexes.size(); i++) {
+                foursquareItems.get(i).setBest(true);
+            }
         }
     }
 }

@@ -14,6 +14,7 @@ public class FoursquareItem {
     private String price;
     private double latitude;
     private double longitude;
+    private boolean best = false;
 
     public String getId() {
         return id;
@@ -85,5 +86,13 @@ public class FoursquareItem {
 
     public void setLongitude(double longitude) {
         this.longitude = longitude;
+    }
+
+    public boolean isBest() {
+        return best;
+    }
+
+    public void setBest(boolean best) {
+        this.best = best;
     }
 }

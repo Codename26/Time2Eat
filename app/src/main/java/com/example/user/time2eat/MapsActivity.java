@@ -1,11 +1,7 @@
 package com.example.user.time2eat;
-
-import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
@@ -33,6 +29,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -52,39 +49,34 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String TAG = "MapsActivity";
     private static final float DEFAULT_ZOOM = 15;
     public static final String LAST_KNOWN_LOCATION = "LAST_KNOWN_LOCATION";
+    public static final String RADIUS = "radius";
 
     private GoogleMap mMap;
-    private LocationManager mLocationManager;
-    private String provider;
     private boolean mLocationPermissionGranted = false;
     private Location mLastKnownLocation;
     private Location mCurrentLocation;
     private FusedLocationProviderClient mFusedLocationProviderClient;
-    private LatLng mDefaultLocation = new LatLng (DEF_LATITUDE,DEF_LONGITUDE);
+    private LatLng mDefaultLocation = new LatLng(DEF_LATITUDE, DEF_LONGITUDE);
     private boolean isSearchTabVisible = false;
     private CardView mCardView;
     private Animation animAppear;
     private Animation animDisappear;
     private FoursquareLoader foursquareLoader;
+    private float[] distanceArray = new float[3];
+    private float prevZoomLevel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         mLocationPermissionGranted = !getLocationPermission();
-        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MapsActivity.this);
-        Criteria criteria = new Criteria();
-        provider = mLocationManager.getBestProvider(criteria, false);
-        if(mLocationPermissionGranted) {
-            @SuppressLint("MissingPermission")
-            Location location = mLocationManager.getLastKnownLocation(provider);
-            if (location != null) {
-                Log.d("Location", location.toString());
-            }
+        if(mLocationPermissionGranted){
+            initMap();
         }
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+    }
+    private void initMap(){
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MapsActivity.this);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -93,43 +85,78 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         animDisappear = AnimationUtils.loadAnimation(MapsActivity.this, R.anim.disappear);
 
         initAutocompleteFragment();
-
     }
 
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        mCurrentLocation = latLngtoLocation(mMap.getCameraPosition().target);
+        updateLocationUI();
+        getDeviceLocation();
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                    if (mCardView != null && mCardView.getVisibility() == View.VISIBLE){
-                        mCardView.setVisibility(View.GONE);
-                        mCardView.setAnimation(animDisappear);
-                        mCardView.getAnimation().start();
+                if (mCardView != null && mCardView.getVisibility() == View.VISIBLE) {
+                    mCardView.setVisibility(View.GONE);
+                    mCardView.setAnimation(animDisappear);
+                    mCardView.getAnimation().start();
+                }
+            }
+        });
+    mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+        @Override
+        public void onMapLoaded() {
+            loadMarkers();
+        }
+    });
+    mMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
+        @Override
+        public void onCameraMoveStarted(int i) {
+           prevZoomLevel = mMap.getCameraPosition().zoom;
+        }
+    });
+        mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener()
+        { @Override
+            public void onCameraIdle() {
+                if (mMap.getCameraPosition().target != null) {
+                    mCurrentLocation = latLngtoLocation(mMap.getCameraPosition().target);
+                    if (mLastKnownLocation != null) {
+                        try {
+                            Location.distanceBetween(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()
+                                    , mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(), distanceArray);
+                            if (distanceArray[0] > 700) {
+                                mMap.clear();
+                                loadMarkers();
+                                mLastKnownLocation = mCurrentLocation;
+                            }
+                        } catch (IllegalArgumentException iae){
+                            loadMarkers();
+                        }
+                    }
+                }
+                if (prevZoomLevel != mMap.getCameraPosition().zoom){
+                    mMap.clear();
+                    loadMarkers();
                 }
             }
         });
 
-        mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
-            @Override
-            public void onCameraIdle() {
-                loadMarkers();
-            }
-        });
-        updateLocationUI();
-        getDeviceLocation();
 
+}
+
+    private Location latLngtoLocation(LatLng latLng) {
+        Location location = new Location(LocationManager.GPS_PROVIDER);
+        location.setLatitude(latLng.latitude);
+        location.setLongitude(latLng.longitude);
+        return location;
     }
+
 
     private void loadMarkers() {
         if (mMap.getCameraPosition().target != null) {
-            foursquareLoader = new FoursquareLoader(mMap.getCameraPosition().target);
+            Log.i(TAG, mMap.getCameraPosition().zoom + "");
+            foursquareLoader = new FoursquareLoader(mMap.getCameraPosition().target, zoomToRadius(mMap.getCameraPosition().zoom));
             foursquareLoader.registerCallback(this);
             foursquareLoader.retrofitCreator();
         }
@@ -137,11 +164,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private boolean getLocationPermission() {
         if(Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(this, android.Manifest.permission
-                .ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, android.Manifest.permission
-                        .ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest
-                    .permission.ACCESS_COARSE_LOCATION}, 100);
+                .ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 100);
             return true;
         }
         return false;
@@ -151,8 +175,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 100){
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED){
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
                 mLocationPermissionGranted = true;
+                initMap();
             } else {
                 showPermissionMessage();
             }
@@ -199,10 +224,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void getDeviceLocation() {
-    /*
-     * Get the best and most recent location of the device, which may be null in rare
-     * cases when a location is not available.
-     */
         try {
             if (mLocationPermissionGranted) {
                 Task locationResult = mFusedLocationProviderClient.getLastLocation();
@@ -268,9 +289,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void startvenuesListActivity() {
-        Intent intent = new Intent(MapsActivity.this, VenuesListActivity.class);
-        intent.putExtra(MapsActivity.LAST_KNOWN_LOCATION, new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
-        startActivity(intent);
+
+            Intent intent = new Intent(MapsActivity.this, VenuesListActivity.class);
+        if (mLastKnownLocation != null) {
+            intent.putExtra(MapsActivity.LAST_KNOWN_LOCATION, new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
+        } else {
+            intent.putExtra(MapsActivity.LAST_KNOWN_LOCATION, new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()));
+        }
+        intent.putExtra(MapsActivity.RADIUS, zoomToRadius(mMap.getCameraPosition().zoom));
+            startActivity(intent);
+
     }
 
 
@@ -291,7 +319,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(Place place) {
-                // TODO: Get info about the selected place.
+
                 if(place != null) {
                     if (mMap != null) {
                         if (place.getViewport() != null) {
@@ -303,7 +331,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             @Override
             public void onError(Status status) {
-                // TODO: Handle the error.
                 Log.i(TAG, "An error occurred: " + status);
             }
         });
@@ -319,10 +346,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void showMarkers(List<FoursquareItem> items) {
         for (int i = 0; i < items.size(); i++) {
-            mMap.addMarker(new MarkerOptions().position
-                    (new LatLng(items.get(i).getLatitude(), items.get(i).getLongitude())).title(items.get(i).getName()));
+            if (items.get(i).isBest()) {
+                mMap.addMarker(new MarkerOptions().position
+                        (new LatLng(items.get(i).getLatitude(), items.get(i).getLongitude())).title(items.get(i).getName())
+                        .icon(BitmapDescriptorFactory
+                                .defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+            } else {
+                mMap.addMarker(new MarkerOptions().position
+                        (new LatLng(items.get(i).getLatitude(), items.get(i).getLongitude())).title(items.get(i).getName()));
+            }
         }
+    }
 
+    private int zoomToRadius(float zoom){
+        Log.i(TAG, "zoomToRadius: " + 500 * (int) Math.pow(2, 15-zoom));
+        return 500 * (int) Math.pow(2, 15-zoom);
     }
 }
 

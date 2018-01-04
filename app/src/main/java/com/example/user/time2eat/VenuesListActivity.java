@@ -19,6 +19,7 @@ public class VenuesListActivity extends AppCompatActivity implements FoursquareL
     private FoursquareLoader foursquareLoader;
     private LinearLayoutManager linearLayoutManager;
     private LatLng mLastKnownLocation;
+    private int mRadius;
 
 
     @Override
@@ -29,8 +30,11 @@ public class VenuesListActivity extends AppCompatActivity implements FoursquareL
         if (intent.hasExtra(MapsActivity.LAST_KNOWN_LOCATION)){
             mLastKnownLocation = intent.getParcelableExtra(MapsActivity.LAST_KNOWN_LOCATION);
         }
+        if (intent.hasExtra(MapsActivity.RADIUS)){
+            mRadius = intent.getIntExtra(MapsActivity.RADIUS, 500);
+        }
         initRecyclerView();
-        foursquareLoader = new FoursquareLoader(mLastKnownLocation);
+        foursquareLoader = new FoursquareLoader(mLastKnownLocation, mRadius);
         foursquareLoader.registerCallback(this);
         foursquareLoader.retrofitCreator();
     }
