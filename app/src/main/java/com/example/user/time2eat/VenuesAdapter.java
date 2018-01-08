@@ -32,11 +32,20 @@ public class VenuesAdapter extends RecyclerView.Adapter<VenuesViewholder>{
 
     @Override
     public void onBindViewHolder(VenuesViewholder holder, int position) {
-        FoursquareItem item = items.get(position);
+      final FoursquareItem item = items.get(position);
         holder.setName(item.getName());
         holder.setAddress(item.getAddress());
         holder.setDistance(item.getDistance());
         holder.setRating(item.getRating());
+
+        if (mItemClickListener != null){
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    mItemClickListener.onItemClick(item);
+                }
+            });
+        }
 
     }
 
@@ -46,6 +55,16 @@ public class VenuesAdapter extends RecyclerView.Adapter<VenuesViewholder>{
             return 0;
         }
         return items.size();
+    }
+
+    private ItemClickListener mItemClickListener;
+
+    public void setItemClickListener(ItemClickListener listener){
+        mItemClickListener = listener;
+    }
+
+    public interface ItemClickListener{
+        void onItemClick(FoursquareItem item);
     }
 }
 

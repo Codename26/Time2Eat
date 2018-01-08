@@ -1,10 +1,13 @@
 package com.example.user.time2eat;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * Created by Codename26 on 31.12.2017.
  */
 
-public class FoursquareItem {
+public class FoursquareItem implements Parcelable {
     private String id;
     private String name;
     private String phone;
@@ -95,4 +98,52 @@ public class FoursquareItem {
     public void setBest(boolean best) {
         this.best = best;
     }
+
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.id);
+        dest.writeString(this.name);
+        dest.writeString(this.phone);
+        dest.writeString(this.address);
+        dest.writeDouble(this.rating);
+        dest.writeInt(this.distance);
+        dest.writeString(this.price);
+        dest.writeDouble(this.latitude);
+        dest.writeDouble(this.longitude);
+        dest.writeByte(this.best ? (byte) 1 : (byte) 0);
+    }
+
+    public FoursquareItem() {
+    }
+
+    protected FoursquareItem(Parcel in) {
+        this.id = in.readString();
+        this.name = in.readString();
+        this.phone = in.readString();
+        this.address = in.readString();
+        this.rating = in.readDouble();
+        this.distance = in.readInt();
+        this.price = in.readString();
+        this.latitude = in.readDouble();
+        this.longitude = in.readDouble();
+        this.best = in.readByte() != 0;
+    }
+
+    public static final Creator<FoursquareItem> CREATOR = new Creator<FoursquareItem>() {
+        @Override
+        public FoursquareItem createFromParcel(Parcel source) {
+            return new FoursquareItem(source);
+        }
+
+        @Override
+        public FoursquareItem[] newArray(int size) {
+            return new FoursquareItem[size];
+        }
+    };
 }

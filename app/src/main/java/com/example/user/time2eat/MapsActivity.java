@@ -50,6 +50,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final float DEFAULT_ZOOM = 15;
     public static final String LAST_KNOWN_LOCATION = "LAST_KNOWN_LOCATION";
     public static final String RADIUS = "radius";
+    public static final String VENUE_DETAILS = "venue_details";
 
     private GoogleMap mMap;
     private boolean mLocationPermissionGranted = false;

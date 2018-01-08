@@ -33,8 +33,7 @@
         android:id="@+id/tvAddress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/tvPhone"
-        android:layout_alignRight="@+id/tvPhone"
+        android:layout_alignLeft="@+id/tvPhone"
         android:layout_below="@+id/tvPhone"
         android:layout_marginTop="16dp"
         android:textSize="@dimen/textSize"
@@ -58,9 +57,12 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignTop="@+id/tvName"
-        android:layout_marginEnd="32dp"
-        android:layout_marginRight="32dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
         android:textSize="@dimen/textSizeHeader"
+        android:background="@color/colorGreenRating"
+        android:textColor="@color/colortextWhite"
+        android:padding="12dp"
         android:text="TextView" />
 
     <TextView
@@ -81,6 +83,7 @@
         android:layout_centerVertical="true"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
+        android:layout_marginTop="16dp"
         android:layout_marginBottom="8dp"
         android:ems="10"
         android:inputType="textPersonName"

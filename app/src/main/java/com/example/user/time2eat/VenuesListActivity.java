@@ -51,6 +51,15 @@ public class VenuesListActivity extends AppCompatActivity implements FoursquareL
     public void itemsFetchedCallBack() {
         List<FoursquareItem> items = foursquareLoader.getVenues();
         VenuesAdapter adapter = new VenuesAdapter(items);
+        adapter.setItemClickListener(new VenuesAdapter.ItemClickListener() {
+            @Override
+            public void onItemClick(FoursquareItem item) {
+                Intent intent = new Intent(VenuesListActivity.this, VenueDetailsActivity.class);
+                intent.putExtra(MapsActivity.VENUE_DETAILS, item);
+                startActivity(intent);
+            }
+        });
         mRecyclerView.setAdapter(adapter);
+
     }
 }
