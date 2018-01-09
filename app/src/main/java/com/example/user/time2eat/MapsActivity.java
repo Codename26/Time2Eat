@@ -74,8 +74,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if(mLocationPermissionGranted){
             initMap();
         }
-
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateLocationUI();
+        getDeviceLocation();
+    }
+
     private void initMap(){
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MapsActivity.this);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()

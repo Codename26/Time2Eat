@@ -91,42 +91,101 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_below="@+id/editText"
+        android:id="@+id/llStars"
         android:layout_marginTop="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
         android:orientation="horizontal">
 
-        <ImageView
-        android:id="@+id/ivButtonStar1"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        app:srcCompat="@android:drawable/btn_star" />
-        <ImageView
+        <Button
+            android:id="@+id/ivButtonStar1"
+            android:layout_width="0dp"
+            android:layout_height="33dp"
+            android:layout_weight="1"
+            android:onClick="buttonRatingListener"
+            android:background="@drawable/star_state"
+            />
+        <Button
             android:id="@+id/ivButtonStar2"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="33dp"
             android:layout_weight="1"
-            app:srcCompat="@android:drawable/btn_star" />
-        <ImageView
+            android:onClick="buttonRatingListener"
+            android:background="@drawable/star_state"
+            />
+        <Button
             android:id="@+id/ivButtonStar3"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="33dp"
             android:layout_weight="1"
-            app:srcCompat="@android:drawable/btn_star" />
-        <ImageView
+            android:onClick="buttonRatingListener"
+            android:background="@drawable/star_state" />
+        <Button
             android:id="@+id/ivButtonStar4"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="33dp"
             android:layout_weight="1"
-            app:srcCompat="@android:drawable/btn_star" />
-        <ImageView
+            android:onClick="buttonRatingListener"
+            android:background="@drawable/star_state" />
+        <Button
             android:id="@+id/ivButtonStar5"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="33dp"
             android:layout_weight="1"
-            app:srcCompat="@android:drawable/btn_star" />
+            android:onClick="buttonRatingListener"
+            android:background="@drawable/star_state" />
+        <Button
+            android:id="@+id/ivButtonStar6"
+            android:layout_width="0dp"
+            android:layout_height="33dp"
+            android:layout_weight="1"
+            android:onClick="buttonRatingListener"
+            android:background="@drawable/star_state" />
+        <Button
+            android:id="@+id/ivButtonStar7"
+            android:layout_width="0dp"
+            android:layout_height="33dp"
+            android:layout_weight="1"
+            android:onClick="buttonRatingListener"
+            android:background="@drawable/star_state" />
+        <Button
+            android:id="@+id/ivButtonStar8"
+            android:layout_width="0dp"
+            android:layout_height="33dp"
+            android:layout_weight="1"
+            android:onClick="buttonRatingListener"
+            android:background="@drawable/star_state" />
+        <Button
+            android:id="@+id/ivButtonStar9"
+            android:layout_width="0dp"
+            android:layout_height="33dp"
+            android:layout_weight="1"
+            android:onClick="buttonRatingListener"
+            android:background="@drawable/star_state" />
+        <Button
+            android:id="@+id/ivButtonStar10"
+            android:layout_width="0dp"
+            android:layout_height="33dp"
+            android:layout_weight="1"
+            android:onClick="buttonRatingListener"
+            android:background="@drawable/star_state" />
     </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/llStars"
+        android:layout_marginTop="8dp"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="25sp"
+            android:layout_gravity="center_horizontal"
+            android:text="0/10"/>
+    </LinearLayout>
+
 
 
 
