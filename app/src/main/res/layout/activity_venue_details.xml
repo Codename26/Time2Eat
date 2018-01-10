@@ -89,102 +89,48 @@
         android:inputType="textPersonName"
         android:hint="@string/your_name" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/editText"
-        android:id="@+id/llStars"
-        android:layout_marginTop="8dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/ivButtonStar1"
-            android:layout_width="0dp"
-            android:layout_height="33dp"
-            android:layout_weight="1"
-            android:onClick="buttonRatingListener"
-            android:background="@drawable/star_state"
-            />
-        <Button
-            android:id="@+id/ivButtonStar2"
-            android:layout_width="0dp"
-            android:layout_height="33dp"
-            android:layout_weight="1"
-            android:onClick="buttonRatingListener"
-            android:background="@drawable/star_state"
-            />
-        <Button
-            android:id="@+id/ivButtonStar3"
-            android:layout_width="0dp"
-            android:layout_height="33dp"
-            android:layout_weight="1"
-            android:onClick="buttonRatingListener"
-            android:background="@drawable/star_state" />
-        <Button
-            android:id="@+id/ivButtonStar4"
-            android:layout_width="0dp"
-            android:layout_height="33dp"
-            android:layout_weight="1"
-            android:onClick="buttonRatingListener"
-            android:background="@drawable/star_state" />
-        <Button
-            android:id="@+id/ivButtonStar5"
-            android:layout_width="0dp"
-            android:layout_height="33dp"
-            android:layout_weight="1"
-            android:onClick="buttonRatingListener"
-            android:background="@drawable/star_state" />
-        <Button
-            android:id="@+id/ivButtonStar6"
-            android:layout_width="0dp"
-            android:layout_height="33dp"
-            android:layout_weight="1"
-            android:onClick="buttonRatingListener"
-            android:background="@drawable/star_state" />
-        <Button
-            android:id="@+id/ivButtonStar7"
-            android:layout_width="0dp"
-            android:layout_height="33dp"
-            android:layout_weight="1"
-            android:onClick="buttonRatingListener"
-            android:background="@drawable/star_state" />
-        <Button
-            android:id="@+id/ivButtonStar8"
-            android:layout_width="0dp"
-            android:layout_height="33dp"
-            android:layout_weight="1"
-            android:onClick="buttonRatingListener"
-            android:background="@drawable/star_state" />
-        <Button
-            android:id="@+id/ivButtonStar9"
-            android:layout_width="0dp"
-            android:layout_height="33dp"
-            android:layout_weight="1"
-            android:onClick="buttonRatingListener"
-            android:background="@drawable/star_state" />
-        <Button
-            android:id="@+id/ivButtonStar10"
-            android:layout_width="0dp"
-            android:layout_height="33dp"
-            android:layout_weight="1"
-            android:onClick="buttonRatingListener"
-            android:background="@drawable/star_state" />
-    </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/llStars"
+        android:layout_below="@id/editText"
         android:layout_marginTop="8dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:id="@+id/linearLayout">
+        <RatingBar
+            android:id="@+id/ratingBar"
+            style="@style/Base.Widget.AppCompat.RatingBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="16dp"
+            android:numStars="5"
+            android:stepSize="0.5"
+            android:rating="0.5"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:id="@+id/tvUserRating"
             android:textSize="25sp"
             android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
             android:text="0/10"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnRate"
+            android:layout_marginTop="8dp"
+            android:padding="16dp"
+            android:background="@color/colorAccent"
+            android:textColor="@color/colortextWhite"
+            android:layout_gravity="center_horizontal"
+            android:text="@string/rateButtonText"/>
+
     </LinearLayout>
+
 
 
 

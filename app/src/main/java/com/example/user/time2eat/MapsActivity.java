@@ -164,7 +164,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void loadMarkers() {
         if (mMap.getCameraPosition().target != null) {
             Log.i(TAG, mMap.getCameraPosition().zoom + "");
-            foursquareLoader = new FoursquareLoader(mMap.getCameraPosition().target, zoomToRadius(mMap.getCameraPosition().zoom));
+            foursquareLoader = new FoursquareLoader(mMap.getCameraPosition().target, zoomToRadius(mMap.getCameraPosition().zoom), this);
             foursquareLoader.registerCallback(this);
             foursquareLoader.retrofitCreator();
         }

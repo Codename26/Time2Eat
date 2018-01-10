@@ -1,5 +1,13 @@
 package com.example.user.time2eat;
 
+import android.arch.persistence.room.Dao;
+import android.arch.persistence.room.Database;
+import android.arch.persistence.room.Delete;
+import android.arch.persistence.room.Insert;
+import android.arch.persistence.room.Room;
+import android.arch.persistence.room.RoomDatabase;
+import android.arch.persistence.room.Update;
+import android.content.Context;
 import android.location.Location;
 import android.util.Log;
 
@@ -34,12 +42,14 @@ public class FoursquareLoader {
     private String ll;
     private List<FoursquareItem> foursquareItems;
     private int mRadius = 500;
+    private Context mContext;
 
-    public FoursquareLoader(LatLng latLng, int radius){
+    public FoursquareLoader(LatLng latLng, int radius, Context context){
 
         ll = stringFromLatLng(latLng);
         mRadius = radius;
         Log.i("ll", ll);
+        mContext = context;
     }
 
     public interface MessagesApi {
@@ -82,45 +92,6 @@ public class FoursquareLoader {
 
             }
         });
-    }
-    public void parseFoursquareSearch(String response) {
-        try {
-            JSONObject jsonObject = new JSONObject(response);
-            if (jsonObject.has("response")) {
-                if (jsonObject.getJSONObject("response").has("venues")) {
-                    JSONArray jsonArray = jsonObject.getJSONObject("response").getJSONArray("venues");
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        JSONObject contact = (JSONObject) jsonArray.getJSONObject(i).getJSONObject("contact");
-                        JSONObject location = (JSONObject) jsonArray.getJSONObject(i).getJSONObject("location");
-                        System.out.println(jsonArray.getJSONObject(i));
-                        FoursquareItem item = new FoursquareItem();
-                        item.setId(jsonArray.getJSONObject(i).getString("id"));
-                        item.setName(jsonArray.getJSONObject(i).getString("name"));
-                        if (location.has("address")) {
-                            item.setAddress(location.getString("address"));
-                        }
-                        if (location.has("lat")){
-                            item.setLatitude(location.getDouble("lat"));
-                        }
-                        if (location.has("lng")){
-                            item.setLongitude(location.getDouble("lng"));
-                        }
-                        if (contact.has("phone")) {
-                            item.setPhone(contact.getString("phone"));
-                        }
-                        if (location.has("distance")) {
-                            item.setDistance(location.getInt("distance"));
-                        }
-                        foursquareItems.add(item);
-                    }
-                }
-            }
-            if (mFetchItemsCallback != null) {
-                mFetchItemsCallback.itemsFetchedCallBack();
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
     }
 
     public void parseFoursquareExplore(String response) {
@@ -247,4 +218,8 @@ public class FoursquareLoader {
             }
         }
     }
+
+   new DataBaseHelper.addItemAsync()
+
+
 }

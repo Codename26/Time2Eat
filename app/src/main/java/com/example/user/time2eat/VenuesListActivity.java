@@ -21,6 +21,8 @@ public class VenuesListActivity extends AppCompatActivity implements FoursquareL
     private LatLng mLastKnownLocation;
     private int mRadius;
 
+    private final int REQUEST_CODE = 1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +36,7 @@ public class VenuesListActivity extends AppCompatActivity implements FoursquareL
             mRadius = intent.getIntExtra(MapsActivity.RADIUS, 500);
         }
         initRecyclerView();
-        foursquareLoader = new FoursquareLoader(mLastKnownLocation, mRadius);
+        foursquareLoader = new FoursquareLoader(mLastKnownLocation, mRadius, this);
         foursquareLoader.registerCallback(this);
         foursquareLoader.retrofitCreator();
     }
@@ -56,10 +58,19 @@ public class VenuesListActivity extends AppCompatActivity implements FoursquareL
             public void onItemClick(FoursquareItem item) {
                 Intent intent = new Intent(VenuesListActivity.this, VenueDetailsActivity.class);
                 intent.putExtra(MapsActivity.VENUE_DETAILS, item);
-                startActivity(intent);
+                startActivityForResult(intent, REQUEST_CODE);
             }
         });
         mRecyclerView.setAdapter(adapter);
 
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK){
+            if (requestCode == REQUEST_CODE){
+
+            }
+        }
     }
 }

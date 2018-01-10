@@ -1,13 +1,29 @@
 package com.example.user.time2eat;
 
+import android.arch.persistence.room.Dao;
+import android.arch.persistence.room.Database;
+import android.arch.persistence.room.Delete;
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.Insert;
+import android.arch.persistence.room.PrimaryKey;
+import android.arch.persistence.room.Query;
+import android.arch.persistence.room.RoomDatabase;
+import android.arch.persistence.room.Update;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Created by Codename26 on 31.12.2017.
  */
 
+@Entity(tableName = "items")
 public class FoursquareItem implements Parcelable {
+    @PrimaryKey
+    @NotNull
     private String id;
     private String name;
     private String phone;
@@ -18,6 +34,8 @@ public class FoursquareItem implements Parcelable {
     private double latitude;
     private double longitude;
     private boolean best = false;
+    private int userRating;
+    private String userName;
 
     public String getId() {
         return id;
@@ -99,6 +117,22 @@ public class FoursquareItem implements Parcelable {
         this.best = best;
     }
 
+    public int getUserRating() {
+        return userRating;
+    }
+
+    public void setUserRating(int userRating) {
+        this.userRating = userRating;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
 
     @Override
     public int describeContents() {
@@ -117,6 +151,8 @@ public class FoursquareItem implements Parcelable {
         dest.writeDouble(this.latitude);
         dest.writeDouble(this.longitude);
         dest.writeByte(this.best ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.userRating);
+        dest.writeString(this.userName);
     }
 
     public FoursquareItem() {
@@ -133,6 +169,8 @@ public class FoursquareItem implements Parcelable {
         this.latitude = in.readDouble();
         this.longitude = in.readDouble();
         this.best = in.readByte() != 0;
+        this.userRating = in.readInt();
+        this.userName = in.readString();
     }
 
     public static final Creator<FoursquareItem> CREATOR = new Creator<FoursquareItem>() {
@@ -146,4 +184,6 @@ public class FoursquareItem implements Parcelable {
             return new FoursquareItem[size];
         }
     };
+
+
 }

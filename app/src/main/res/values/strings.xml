@@ -8,4 +8,5 @@
     <string name="search_title">Поиск</string>
     <string name="your_name">Ваше имя</string>
     <string name="please_rate">Оцените заведение:</string>
+    <string name="rateButtonText">Оценить</string>
 </resources>
