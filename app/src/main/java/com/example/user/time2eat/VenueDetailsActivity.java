@@ -50,8 +50,12 @@ public class VenueDetailsActivity extends AppCompatActivity {
         etName = findViewById(R.id.editText);
 
         tvName.setText(mItem.getName());
-        tvPhone.setText(mItem.getPhone());
-        tvAddress.setText(mItem.getAddress());
+        if (mItem.getPhone() != null) {
+            tvPhone.setText(mItem.getPhone());
+        } else tvPhone.setText(R.string.phone_null);
+        if (mItem.getAddress() != null) {
+            tvAddress.setText(mItem.getAddress());
+        } else  tvAddress.setText(R.string.address_null);
         tvPriceTier.setText(mItem.getPrice());
         tvRating.setText(String.valueOf(mItem.getRating()));
 

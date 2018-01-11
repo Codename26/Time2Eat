@@ -1,14 +1,8 @@
 package com.example.user.time2eat;
 
-import android.arch.persistence.room.Dao;
-import android.arch.persistence.room.Database;
-import android.arch.persistence.room.Delete;
-import android.arch.persistence.room.Insert;
-import android.arch.persistence.room.Room;
-import android.arch.persistence.room.RoomDatabase;
-import android.arch.persistence.room.Update;
 import android.content.Context;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -17,8 +11,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -32,7 +33,7 @@ import retrofit2.http.Query;
  * Created by Codename26 on 31.12.2017.
  */
 
-public class FoursquareLoader {
+public class FoursquareLoader implements DataBaseHelper.FetchItemsFromDBCallback {
 
     private static final String TAG = "MainActivity";
     private static final String CLIENT_ID = "2RSD0BHKRAOU043MHKNMALCCN4PTJP42GWRCW1PKMXOUKOK2";
@@ -40,17 +41,28 @@ public class FoursquareLoader {
     private static final String CATEGORY_ID = "4d4b7105d754a06374d81259";
     private static final String SECTION = "food";
     private String ll;
+    private LatLng mLatLing;
     private List<FoursquareItem> foursquareItems;
     private int mRadius = 500;
     private Context mContext;
+    private DataBaseHelper mHelper;
 
     public FoursquareLoader(LatLng latLng, int radius, Context context){
-
+        mLatLing = latLng;
         ll = stringFromLatLng(latLng);
         mRadius = radius;
         Log.i("ll", ll);
         mContext = context;
+        mHelper = new DataBaseHelper(mContext);
+        mHelper.registerCallback(this);
     }
+
+    public void fetchData() {
+        CheckInternetAsyncTask task = new CheckInternetAsyncTask();
+        task.execute();
+    }
+
+
 
     public interface MessagesApi {
 
@@ -89,9 +101,15 @@ public class FoursquareLoader {
 
             @Override
             public void onFailure(Call<String> call, Throwable t) {
+                Log.i(TAG, "response failed, getting items from DB");
+                fetchDataFromDB();
 
             }
         });
+    }
+
+    private void fetchDataFromDB() {
+        mHelper.orderItems();
     }
 
     public void parseFoursquareExplore(String response) {
@@ -140,6 +158,7 @@ public class FoursquareLoader {
                 }
             }
             if (mFetchItemsCallback != null) {
+                addItemsToDB();
                 mFetchItemsCallback.itemsFetchedCallBack();
             }
         } catch (JSONException e) {
@@ -147,9 +166,8 @@ public class FoursquareLoader {
         }
     }
 
-
-
     FetchItemsCallback mFetchItemsCallback;
+
     void registerCallback(FetchItemsCallback fetchItemsCallback){
         mFetchItemsCallback = fetchItemsCallback;
     }
@@ -167,59 +185,131 @@ public class FoursquareLoader {
 
     private void sortVenues(){
         FoursquareItem temp;
-        for (int i = foursquareItems.size()-1; i > 0 ; i--) {
-            for (int j = 0; j < i; j++) {
-                if (foursquareItems.get(j).getDistance() > foursquareItems.get(j+1).getDistance()){
-                    temp = foursquareItems.get(j);
-                    foursquareItems.set(j, foursquareItems.get(j+1));
-                    foursquareItems.set(j+1, temp);
+        if (foursquareItems != null) {
+            for (int i = foursquareItems.size() - 1; i > 0; i--) {
+                for (int j = 0; j < i; j++) {
+                    if (foursquareItems.get(j).getDistance() > foursquareItems.get(j + 1).getDistance()) {
+                        temp = foursquareItems.get(j);
+                        foursquareItems.set(j, foursquareItems.get(j + 1));
+                        foursquareItems.set(j + 1, temp);
+                    }
                 }
-
             }
-
         }
     }
-    private void findBestVenue(){
+    private void findBestVenue() {
         int maxIndex = 0;
         double max = 0;
         boolean hasRating = false;
-
-        for (int i = 0; i < foursquareItems.size(); i++) {
-            if (foursquareItems.get(i).getRating() > 0){
-                maxIndex = i;
-                max = foursquareItems.get(i).getRating();
-                hasRating = true;
-            }
-        }
-        if (!hasRating){
-            return;
-        }
-        List maxIndexes = new ArrayList();
-
-        for (int i = 0; i < foursquareItems.size(); i++) {
-            if (foursquareItems.get(i).getRating() > max) {
-                maxIndex = i;
-                max = foursquareItems.get(i).getRating();
-            }
-        }
+        if (foursquareItems != null) {
             for (int i = 0; i < foursquareItems.size(); i++) {
-            if (i == maxIndex){
-                continue;
+                if (foursquareItems.get(i).getRating() > 0) {
+                    maxIndex = i;
+                    max = foursquareItems.get(i).getRating();
+                    hasRating = true;
+                }
             }
-              if (foursquareItems.get(i).getRating() == max) {
-                  maxIndexes.add(i);
-              }
+            if (!hasRating) {
+                return;
+            }
+            List maxIndexes = new ArrayList();
+
+            for (int i = 0; i < foursquareItems.size(); i++) {
+                if (foursquareItems.get(i).getRating() > max) {
+                    maxIndex = i;
+                    max = foursquareItems.get(i).getRating();
+                }
+            }
+            for (int i = 0; i < foursquareItems.size(); i++) {
+                if (i == maxIndex) {
+                    continue;
+                }
+                if (foursquareItems.get(i).getRating() == max) {
+                    maxIndexes.add(i);
+                }
             }
 
-        foursquareItems.get(maxIndex).setBest(true);
-        if (maxIndexes.size() != 0) {
-            for (int i = 0; i < maxIndexes.size(); i++) {
-                foursquareItems.get(i).setBest(true);
+            foursquareItems.get(maxIndex).setBest(true);
+            if (maxIndexes.size() != 0) {
+                for (int i = 0; i < maxIndexes.size(); i++) {
+                    foursquareItems.get(i).setBest(true);
+                }
             }
         }
     }
 
-   new DataBaseHelper.addItemAsync()
+    private void addItemsToDB(){
+        mHelper.addItems(foursquareItems);
+    }
 
+    public boolean isInternetAvailable() {
+        try {
+            InetAddress ipAddr = InetAddress.getByName("google.com");
+            Log.i(TAG, "Internet is up");
+            return !ipAddr.equals("");
+
+        } catch (Exception e) {
+            Log.i(TAG, "Internet is down");
+            return false;
+        }
+
+    }
+
+    @Override
+    public void itemsLoadedCallBack() {
+        foursquareItems = mHelper.getItems();
+        filterItemsInRadius(mLatLing, mRadius);
+        if (mFetchItemsCallback != null) {
+            mFetchItemsCallback.itemsFetchedCallBack();
+        }
+    }
+
+    private void filterItemsInRadius(LatLng mLatLing, int mRadius) {
+        List<Integer> deleteList = new ArrayList<>();
+        Location loc1 = new Location("");
+        loc1.setLatitude(mLatLing.latitude);
+        loc1.setLongitude(mLatLing.longitude);
+        Location loc2 = new Location("");
+        FoursquareItem item;
+        Iterator<FoursquareItem> iterator = foursquareItems.iterator();
+        while (iterator.hasNext()){
+            item = iterator.next();
+            loc2.setLatitude(item.getLatitude());
+            loc2.setLongitude(item.getLongitude());
+            if (loc1.distanceTo(loc2) > mRadius){
+               iterator.remove();
+            }
+        }
+    }
+
+    private class CheckInternetAsyncTask extends AsyncTask<Void, Void, Boolean>{
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            return isOnline();
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            if (aBoolean){
+                retrofitCreator();
+            } else {
+                fetchDataFromDB();
+            }
+        }
+    }
+
+    public boolean isOnline() {
+        try {
+            int timeoutMs = 1500;
+            Socket sock = new Socket();
+            SocketAddress sockaddr = new InetSocketAddress("8.8.8.8", 53);
+
+            sock.connect(sockaddr, timeoutMs);
+            sock.close();
+
+            return true;
+        } catch (IOException e) { return false; }
+    }
 
 }

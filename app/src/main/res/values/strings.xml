@@ -9,4 +9,6 @@
     <string name="your_name">Ваше имя</string>
     <string name="please_rate">Оцените заведение:</string>
     <string name="rateButtonText">Оценить</string>
+    <string name="phone_null">Тел: -</string>
+    <string name="address_null">Адрес: -</string>
 </resources>

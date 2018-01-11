@@ -27,5 +27,8 @@ import java.util.List;
 
         @Delete
         void delete(FoursquareItem item);
+
+        @Insert
+        void insertAll(FoursquareItem... items);
     }
 

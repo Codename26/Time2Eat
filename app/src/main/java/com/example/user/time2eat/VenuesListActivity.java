@@ -20,8 +20,9 @@ public class VenuesListActivity extends AppCompatActivity implements FoursquareL
     private LinearLayoutManager linearLayoutManager;
     private LatLng mLastKnownLocation;
     private int mRadius;
-
     private final int REQUEST_CODE = 1;
+
+
 
 
     @Override

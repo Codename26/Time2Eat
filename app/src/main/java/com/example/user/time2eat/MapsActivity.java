@@ -47,6 +47,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final Double DEF_LATITUDE = 50.4463956;
     private static final Double DEF_LONGITUDE = 30.552992;
     private static final String TAG = "MapsActivity";
+    public final int REQUEST_CODE = 1;
     private static final float DEFAULT_ZOOM = 15;
     public static final String LAST_KNOWN_LOCATION = "LAST_KNOWN_LOCATION";
     public static final String RADIUS = "radius";
@@ -65,6 +66,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private FoursquareLoader foursquareLoader;
     private float[] distanceArray = new float[3];
     private float prevZoomLevel;
+    private List<FoursquareItem> mItems;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,7 +168,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.i(TAG, mMap.getCameraPosition().zoom + "");
             foursquareLoader = new FoursquareLoader(mMap.getCameraPosition().target, zoomToRadius(mMap.getCameraPosition().zoom), this);
             foursquareLoader.registerCallback(this);
-            foursquareLoader.retrofitCreator();
+            foursquareLoader.fetchData();
         }
     }
 
@@ -347,28 +349,51 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void itemsFetchedCallBack() {
-        List<FoursquareItem> items = foursquareLoader.getVenues();
-     showMarkers(items);
+        mItems = foursquareLoader.getVenues();
+        showMarkers(mItems);
 
         }
 
     private void showMarkers(List<FoursquareItem> items) {
-        for (int i = 0; i < items.size(); i++) {
-            if (items.get(i).isBest()) {
-                mMap.addMarker(new MarkerOptions().position
-                        (new LatLng(items.get(i).getLatitude(), items.get(i).getLongitude())).title(items.get(i).getName())
-                        .icon(BitmapDescriptorFactory
-                                .defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-            } else {
-                mMap.addMarker(new MarkerOptions().position
-                        (new LatLng(items.get(i).getLatitude(), items.get(i).getLongitude())).title(items.get(i).getName()));
+        if (items != null) {
+            for (int i = 0; i < items.size(); i++) {
+                if (items.get(i).isBest()) {
+                    Marker m = mMap.addMarker(new MarkerOptions().position
+                            (new LatLng(items.get(i).getLatitude(), items.get(i).getLongitude()))
+                            .title(items.get(i).getName())
+                            .icon(BitmapDescriptorFactory
+                                    .defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                    m.setTag(items.get(i));
+                } else {
+                    Marker m = mMap.addMarker(new MarkerOptions().position
+                            (new LatLng(items.get(i).getLatitude(), items.get(i).getLongitude())).title(items.get(i).getName()));
+                    m.setTag(items.get(i));
+                }
             }
+            mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+                @Override
+                public void onInfoWindowClick(Marker marker) {
+                    FoursquareItem item = (FoursquareItem) marker.getTag();
+                    Intent intent = new Intent(MapsActivity.this, VenueDetailsActivity.class);
+                    intent.putExtra(MapsActivity.VENUE_DETAILS, item);
+                    startActivityForResult(intent, REQUEST_CODE);
+                }
+            });
         }
     }
 
     private int zoomToRadius(float zoom){
         Log.i(TAG, "zoomToRadius: " + 500 * (int) Math.pow(2, 15-zoom));
         return 500 * (int) Math.pow(2, 15-zoom);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK){
+            if (requestCode == REQUEST_CODE){
+
+            }
+        }
     }
 }
 
