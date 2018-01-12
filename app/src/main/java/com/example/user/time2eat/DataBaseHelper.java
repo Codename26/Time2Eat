@@ -25,8 +25,31 @@ public class DataBaseHelper{
         mFetchItemsFromDBCallback = fetchItemsFromDBCallback;
     }
 
+    public interface UpdateItemCallback{
+        void itemUpdatedCallback();
+    }
+
+    private UpdateItemCallback mUpdateItemCallback;
+    public void registerUpdateItemCallback(UpdateItemCallback updateItemCallback){
+        mUpdateItemCallback = updateItemCallback;
+    }
+
+    public interface GetItemCallback{
+        void itemGotCallback();
+    }
+
+    private GetItemCallback mGetItemCallback;
+    public void registerGetItemCallback(GetItemCallback getItemCallback){
+        mGetItemCallback = getItemCallback;
+    }
+
     public static void addItemAsync(FoursquareItemDatabase db, FoursquareItem item){
         AddItemAsyncTask task = new AddItemAsyncTask(db, item);
+        task.execute();
+    }
+
+    public void updateItem(FoursquareItem item){
+        UpdateItemAsyncTask task = new UpdateItemAsyncTask(mDb, item);
         task.execute();
     }
 
@@ -42,8 +65,38 @@ public class DataBaseHelper{
 
     }
 
+    public void getItemAsync(FoursquareItem item){
+        GetItemAsyncTask task = new GetItemAsyncTask(item.getId());
+        task.execute();
+    }
+
+    public FoursquareItem getItem(){
+        return mItem;
+    }
+
     public List<FoursquareItem> getItems(){
         return mItems;
+    }
+
+    private class UpdateItemAsyncTask extends AsyncTask<Void, Void, Void> {
+        private FoursquareItem mItem;
+        private FoursquareItemDatabase mDb;
+        public UpdateItemAsyncTask(FoursquareItemDatabase db, FoursquareItem item){
+            mItem = item;
+            mDb = db;
+        }
+        @Override
+        protected Void doInBackground(Void... voids) {
+            mDb.foursquareItemDao().update(mItem);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            if (mUpdateItemCallback != null){
+                mUpdateItemCallback.itemUpdatedCallback();
+            }
+        }
     }
 
     private class GetItemsAsyncTask extends AsyncTask<Void, Void, List<FoursquareItem>> {
@@ -61,6 +114,26 @@ public class DataBaseHelper{
             mItems = items;
             if (mFetchItemsFromDBCallback != null){
                 mFetchItemsFromDBCallback.itemsLoadedCallBack();
+            }
+        }
+    }
+
+    private class GetItemAsyncTask extends AsyncTask<Void, Void, FoursquareItem> {
+        String mId;
+        public GetItemAsyncTask(String id){
+            mId = id;
+        }
+
+        @Override
+        protected FoursquareItem doInBackground(Void... voids) {
+            return mDb.foursquareItemDao().getById(mId);
+        }
+
+        @Override
+        protected void onPostExecute(FoursquareItem item) {
+            mItem = item;
+            if (mGetItemCallback != null){
+                mGetItemCallback.itemGotCallback();
             }
         }
     }

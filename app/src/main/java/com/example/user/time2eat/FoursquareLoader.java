@@ -242,19 +242,6 @@ public class FoursquareLoader implements DataBaseHelper.FetchItemsFromDBCallback
         mHelper.addItems(foursquareItems);
     }
 
-    public boolean isInternetAvailable() {
-        try {
-            InetAddress ipAddr = InetAddress.getByName("google.com");
-            Log.i(TAG, "Internet is up");
-            return !ipAddr.equals("");
-
-        } catch (Exception e) {
-            Log.i(TAG, "Internet is down");
-            return false;
-        }
-
-    }
-
     @Override
     public void itemsLoadedCallBack() {
         foursquareItems = mHelper.getItems();
@@ -310,6 +297,10 @@ public class FoursquareLoader implements DataBaseHelper.FetchItemsFromDBCallback
 
             return true;
         } catch (IOException e) { return false; }
+    }
+
+    public void updateItem(FoursquareItem item){
+        mHelper.updateItem(item);
     }
 
 }

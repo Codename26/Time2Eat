@@ -59,19 +59,10 @@ public class VenuesListActivity extends AppCompatActivity implements FoursquareL
             public void onItemClick(FoursquareItem item) {
                 Intent intent = new Intent(VenuesListActivity.this, VenueDetailsActivity.class);
                 intent.putExtra(MapsActivity.VENUE_DETAILS, item);
-                startActivityForResult(intent, REQUEST_CODE);
+                startActivity(intent);
             }
         });
         mRecyclerView.setAdapter(adapter);
 
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK){
-            if (requestCode == REQUEST_CODE){
-
-            }
-        }
     }
 }

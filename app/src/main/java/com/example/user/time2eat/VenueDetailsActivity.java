@@ -10,7 +10,8 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class VenueDetailsActivity extends AppCompatActivity {
+public class VenueDetailsActivity extends AppCompatActivity implements DataBaseHelper.UpdateItemCallback,
+DataBaseHelper.GetItemCallback{
 
     private TextView tvName;
     private TextView tvPhone;
@@ -23,21 +24,25 @@ public class VenueDetailsActivity extends AppCompatActivity {
     private RatingBar mRatingBar;
     private Button btnRate;
     private int mUserRating = 0;
+    private DataBaseHelper mHelper;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_venue_details);
         Intent intent = getIntent();
         if (intent.hasExtra(MapsActivity.VENUE_DETAILS)) {
             mItem = intent.getParcelableExtra(MapsActivity.VENUE_DETAILS);
-            setContentView(R.layout.activity_venue_details);
-            initInterface(mItem);
         }
-
+        if (mItem != null) {
+            loadItem(mItem);
+        }
     }
 
     private void initInterface(final FoursquareItem mItem) {
+
+
 
         tvName = findViewById(R.id.tvName);
         tvPhone = findViewById(R.id.tvPhone);
@@ -58,6 +63,9 @@ public class VenueDetailsActivity extends AppCompatActivity {
         } else  tvAddress.setText(R.string.address_null);
         tvPriceTier.setText(mItem.getPrice());
         tvRating.setText(String.valueOf(mItem.getRating()));
+        tvUserRating.setText(String.valueOf(mItem.getUserRating()) + "/10");
+        etName.setText(mItem.getUserName());
+        mRatingBar.setRating(mItem.getUserRating() /2);
 
         mRatingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
             @Override
@@ -76,17 +84,37 @@ public class VenueDetailsActivity extends AppCompatActivity {
                 if (!etName.getText().equals("")) {
                     mItem.setUserName(String.valueOf(etName.getText()));
                 }
-                Intent intent = new Intent();
-                intent.putExtra(MapsActivity.VENUE_DETAILS, mItem);
-                setResult(RESULT_OK, intent);
-                finish();
+
+                saveItem(mItem);
             }
         });
 
 
     }
 
+    private void saveItem(FoursquareItem mItem) {
+        mHelper = new DataBaseHelper(this);
+        mHelper.registerUpdateItemCallback(this);
+        mHelper.updateItem(mItem);
+    }
+
+    private void loadItem(FoursquareItem item){
+        mHelper = new DataBaseHelper(this);
+        mHelper.registerGetItemCallback(this);
+        mHelper.getItemAsync(item);
+    }
 
 
+    @Override
+    public void itemUpdatedCallback() {
+        finish();
+    }
 
+    @Override
+    public void itemGotCallback() {
+        FoursquareItem item = mHelper.getItem();
+        if (item != null) {
+            initInterface(item);
+        } else initInterface(mItem);
+    }
 }
