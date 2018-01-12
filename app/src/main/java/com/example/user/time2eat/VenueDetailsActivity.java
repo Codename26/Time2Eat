@@ -1,6 +1,7 @@
 package com.example.user.time2eat;
 
 import android.content.Intent;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -62,16 +63,17 @@ DataBaseHelper.GetItemCallback {
         } else tvAddress.setText(R.string.address_null);
         if (mItem.getPrice() != null) {
             String price = "";
-            if (mItem.getPrice().equals(1)) {
-                price = "$";
-            } else if (mItem.getPrice().equals(2)) {
-                price = "$$";
-            } else if (mItem.getPrice().equals(3)) {
-                price = "$$$";
+            if (mItem.getPrice().equals("1")) {
+                price = getString(R.string.price_tier_1);
+            } else if (mItem.getPrice().equals("2")) {
+                price = getString(R.string.price_tier_2);
+            } else if (mItem.getPrice().equals("3")) {
+                price = getString(R.string.price_tier_3);
             }
             tvPriceTier.setText(price);
         } else tvPriceTier.setText(R.string.price_null);
         tvRating.setText(String.valueOf(mItem.getRating()));
+        setRatingColor(tvRating, mItem.getRating());
         tvUserRating.setText(String.valueOf(mItem.getUserRating()) + "/10");
         etName.setText(mItem.getUserName());
         mRatingBar.setRating(mItem.getUserRating() /2);
@@ -125,5 +127,23 @@ DataBaseHelper.GetItemCallback {
         if (item != null) {
             initInterface(item);
         } else initInterface(mItem);
+    }
+
+    public void setRatingColor(View view, double ratingValue){
+        int color;
+        if (ratingValue >= 8.0){
+            color = ContextCompat.getColor(getApplicationContext(), R.color.colorGreenRating);
+        } else if (ratingValue >= 7.0 && ratingValue < 8.0){
+            color = ContextCompat.getColor(getApplicationContext(), R.color.colorYellowRating);
+        } else if (ratingValue >= 6.0 && ratingValue < 7.0){
+            color = ContextCompat.getColor(getApplicationContext(), R.color.colorAmberRating);
+        }else if (ratingValue >= 5.0 && ratingValue < 6.0){
+            color = ContextCompat.getColor(getApplicationContext(), R.color.colorOrangeRating);
+        }else if (ratingValue == 0.0){
+            color = ContextCompat.getColor(getApplicationContext(), R.color.colorZeroRating);
+        } else {
+            color = ContextCompat.getColor(getApplicationContext(), R.color.colorRedRating);
+        }
+        view.setBackgroundColor(color);
     }
 }

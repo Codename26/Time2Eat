@@ -12,4 +12,7 @@
     <string name="phone_null">Тел: -</string>
     <string name="address_null">Адрес: -</string>
     <string name="price_null">Цена: -</string>
+    <string name="price_tier_1">Ценовой диапазон: $</string>
+    <string name="price_tier_2">Ценовой диапазон: $$</string>
+    <string name="price_tier_3">Ценовой диапазон: $$$</string>
 </resources>

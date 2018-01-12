@@ -384,7 +384,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private int zoomToRadius(float zoom){
         Log.i(TAG, "zoomToRadius: " + 500 * (int) Math.pow(2, 15-zoom));
-        return 500 * (int) Math.pow(2, 15-zoom);
+        return (int) (500 * Math.pow(2, 15-zoom));
     }
 
     @Override
