@@ -152,6 +152,12 @@ public class FoursquareLoader implements DataBaseHelper.FetchItemsFromDBCallback
                             if (jsonObject.has("rating")){
                                 item.setRating(jsonObject.getDouble("rating"));
                             }
+                            if (jsonObject.has("price")){
+                                JSONObject price = (JSONObject) jsonObject.getJSONObject("price");
+                                if (price.has("tier")) {
+                                    item.setPrice(price.getString("tier"));
+                                }
+                            }
                             foursquareItems.add(item);
                         }
                     }

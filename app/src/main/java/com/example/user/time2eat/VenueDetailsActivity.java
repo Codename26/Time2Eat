@@ -11,7 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class VenueDetailsActivity extends AppCompatActivity implements DataBaseHelper.UpdateItemCallback,
-DataBaseHelper.GetItemCallback{
+DataBaseHelper.GetItemCallback {
 
     private TextView tvName;
     private TextView tvPhone;
@@ -43,7 +43,6 @@ DataBaseHelper.GetItemCallback{
     private void initInterface(final FoursquareItem mItem) {
 
 
-
         tvName = findViewById(R.id.tvName);
         tvPhone = findViewById(R.id.tvPhone);
         tvAddress = findViewById(R.id.tvAddress);
@@ -60,8 +59,18 @@ DataBaseHelper.GetItemCallback{
         } else tvPhone.setText(R.string.phone_null);
         if (mItem.getAddress() != null) {
             tvAddress.setText(mItem.getAddress());
-        } else  tvAddress.setText(R.string.address_null);
-        tvPriceTier.setText(mItem.getPrice());
+        } else tvAddress.setText(R.string.address_null);
+        if (mItem.getPrice() != null) {
+            String price = "";
+            if (mItem.getPrice().equals(1)) {
+                price = "$";
+            } else if (mItem.getPrice().equals(2)) {
+                price = "$$";
+            } else if (mItem.getPrice().equals(3)) {
+                price = "$$$";
+            }
+            tvPriceTier.setText(price);
+        } else tvPriceTier.setText(R.string.price_null);
         tvRating.setText(String.valueOf(mItem.getRating()));
         tvUserRating.setText(String.valueOf(mItem.getUserRating()) + "/10");
         etName.setText(mItem.getUserName());
